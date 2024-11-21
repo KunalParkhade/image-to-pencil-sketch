@@ -7,7 +7,7 @@ def convert_to_grayscale(image_np):
     """
     return cv2.cvtColor(image_np, cv2.COLOR_RGB2GRAY)
 
-def create_pencil_sketch(image_np):
+def create_pencil_sketch(image_np, blur_intensity=21, detail_level=256):
     """
     Takes an RGB image and creates a pencil sketch.
     """
@@ -18,12 +18,12 @@ def create_pencil_sketch(image_np):
     inverted_image = 255 - gray_image
 
     # Apply Gaussian Blur
-    blurred_image = cv2.GaussianBlur(inverted_image, (21, 21), sigmaX=0, sigmaY=0)
+    blurred_image = cv2.GaussianBlur(inverted_image, (blur_intensity, blur_intensity), sigmaX=0, sigmaY=0)
 
     # Invert the blurred image
     inverted_blur = 255 - blurred_image
 
     # CReating pencil sketch by blending the grayscale and inverted blurred image
-    sketch = cv2.divide(gray_image, inverted_blur, scale=256.0)
+    sketch = cv2.divide(gray_image, inverted_blur, scale=detail_level)
 
     return sketch

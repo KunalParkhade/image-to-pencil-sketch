@@ -4,11 +4,10 @@ __pycache__/
 
 # Virtual environment
 venv/
-.env
 
 # System files
 .DS_Store
 Thumbs.db
 
-# Streamlit secrets
-.secrets/
+# Streamlit
+.streamlit/
