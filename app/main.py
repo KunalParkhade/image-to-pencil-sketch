@@ -1,58 +1,72 @@
 import streamlit as st
-import numpy as np
-from PIL import Image
-from utils import create_pencil_sketch
-import cv2
+from auth import login_form, signup_form
 
-# Streamlit app title and description
+# Configure Streamlit
 st.set_page_config(page_title="Pencil Sketch Transformer", layout="centered")
-st.title("🎨 Pencil Sketch Transformer")
-st.markdown("Convert your photos into stunning pencil sketches in seconds! ✏️")
 
-st.sidebar.header("Customize Sketch")
-blur_intensity = st.sidebar.slider("Blur Intensity", min_value=1, max_value=51, value=21, step=2)
-detail_level = st.sidebar.slider("Sketch Detail Level", min_value=50, max_value=300, value=256)
+# Session state for login tracking
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+if "username" not in st.session_state:
+    st.session_state["username"] = ""
 
-# Upload image
-uploaded_file = st.file_uploader("📂 Upload an image (JPG/PNG)", type=["jpg", "jpeg", "png"])
+# Signup/Login Logic
+if not st.session_state["logged_in"]:
+    st.title("Welcome to Pencil Sketch Transformer! 🎨")
+    st.markdown("Please log in or sign up to access the app.")
 
-if uploaded_file:
-    # Convert uploaded file to image
-    image = Image.open(uploaded_file)
-    image_np = np.array(image)
+    tab1, tab2 = st.tabs(["Login", "Signup"])
+    with tab1:
+        login_form()
+    with tab2:
+        signup_form()
 
-    # Display original image
-    st.subheader("Original Image")
-    st.image(image, caption="Original Image", use_container_width=True)
+else:
+    # Main App
+    st.title(f"Welcome, {st.session_state['username']}!")
+    st.markdown("Convert your photos into stunning pencil sketches! ✏️")
 
-    # create a pencil sketch
-    pencil_sketch = create_pencil_sketch(image_np, blur_intensity, detail_level)
+    # Logout button
+    if st.button("Logout"):
+        st.session_state["logged_in"] = False
+        st.session_state["username"] = ""
+        st.rerun()
 
-    # Display pencil sketch
-    st.subheader("Pencil sketch")
-    st.image(pencil_sketch,caption="Pencil Sketch", use_container_width=True, clamp=True, channels="GRAY")
+    # Sidebar options
+    st.sidebar.header("Customize Sketch")
+    blur_intensity = st.sidebar.slider("Blur Intensity", min_value=1, max_value=51, value=21, step=2)
+    detail_level = st.sidebar.slider("Sketch Detail Level", min_value=50, max_value=300, value=256)
 
-    # Sketch back to PIL for downloading
-    sketch_pil = Image.fromarray(pencil_sketch).convert("RGB")
+    # File upload and sketch functionality
+    uploaded_file = st.file_uploader("📂 Upload an image (JPG/PNG)", type=["jpg", "jpeg", "png"])
 
-    # Provide download option
-    st.download_button(
-        label="Download Sketch",
-        data=sketch_pil.tobytes("jpeg", "RGB"),
-        file_name="pencil_sketch.jpg",
-        mime="image/jpeg",
-    )
+    if uploaded_file:
+        from utils import create_pencil_sketch
+        import numpy as np
+        from PIL import Image
 
-# Footer styling
-st.markdown("<hr>", unsafe_allow_html=True)
-st.markdown(
-    """
-    <style>
-        footer {visibility: hidden;}
-        .reportview-container {background: #f4f4f9;}
-        header {visibility: hidden;}
-    </style>
-    <footer>Powered by Streamlit | Made with 💖 by Kunal Parkhade</footer>
-    """,
-    unsafe_allow_html=True
-)
+        # Convert the uploaded file to an image
+        image = Image.open(uploaded_file)
+        image_np = np.array(image)
+
+        # Display the original image
+        st.subheader("Original Image")
+        st.image(image, caption="Original Image", use_container_width=True)
+
+        # Create the pencil sketch
+        pencil_sketch = create_pencil_sketch(image_np, blur_intensity, detail_level)
+
+        # Display the pencil sketch
+        st.subheader("Pencil Sketch")
+        st.image(pencil_sketch, caption="Pencil Sketch", use_container_width=True, clamp=True, channels="GRAY")
+
+        # Convert sketch back to PIL format in RGB mode for downloading
+        sketch_pil = Image.fromarray(pencil_sketch).convert("RGB")
+
+        # Provide download option
+        st.download_button(
+            label="Download Sketch",
+            data=sketch_pil.tobytes("jpeg", "RGB"),
+            file_name="pencil_sketch.jpg",
+            mime="image/jpeg",
+        )

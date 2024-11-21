@@ -11,3 +11,5 @@ Thumbs.db
 
 # Streamlit
 .streamlit/
+
+app/users.json
