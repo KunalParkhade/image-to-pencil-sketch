@@ -13,3 +13,5 @@ Thumbs.db
 .streamlit/
 
 app/users.json
+
+firebase_credentials.json

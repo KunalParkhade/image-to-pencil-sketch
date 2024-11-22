@@ -1,5 +1,8 @@
 import streamlit as st
-from auth import login_form, signup_form
+from auth import signup_user, login_user
+from utils import create_pencil_sketch
+from PIL import Image
+import numpy as np
 
 # Configure Streamlit
 st.set_page_config(page_title="Pencil Sketch Transformer", layout="centered")
@@ -15,12 +18,28 @@ if not st.session_state["logged_in"]:
     st.title("Welcome to Pencil Sketch Transformer! 🎨")
     st.markdown("Please log in or sign up to access the app.")
 
-    tab1, tab2 = st.tabs(["Login", "Signup"])
-    with tab1:
-        login_form()
-    with tab2:
-        signup_form()
+    auth_mode = st.sidebar.selectbox("Choose Mode", ["Login", "Signup"])
 
+    if auth_mode == "Signup":
+        st.subheader("Signup")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Signup"):
+            success, message = signup_user(username, password)
+            st.success(message) if success else st.error(message)
+
+    elif auth_mode == "Login":
+        st.subheader("Login")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Login"):
+            success, message = login_user(username, password)
+            if success:
+                st.session_state["logged_in"] = True
+                st.session_state["username"] = username
+                st.success("Login successful!")
+            else:
+                st.error(message)
 else:
     # Main App
     st.title(f"Welcome, {st.session_state['username']}!")
@@ -30,7 +49,7 @@ else:
     if st.button("Logout"):
         st.session_state["logged_in"] = False
         st.session_state["username"] = ""
-        st.rerun()
+        st.experimental_rerun()
 
     # Sidebar options
     st.sidebar.header("Customize Sketch")
@@ -41,10 +60,6 @@ else:
     uploaded_file = st.file_uploader("📂 Upload an image (JPG/PNG)", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
-        from utils import create_pencil_sketch
-        import numpy as np
-        from PIL import Image
-
         # Convert the uploaded file to an image
         image = Image.open(uploaded_file)
         image_np = np.array(image)
