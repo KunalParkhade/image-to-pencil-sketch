@@ -3,6 +3,7 @@ from auth import signup_user, login_user
 from utils import create_pencil_sketch
 from PIL import Image
 import numpy as np
+import re
 
 # Configure Streamlit
 st.set_page_config(page_title="Pencil Sketch Transformer", layout="centered")
@@ -13,33 +14,66 @@ if "logged_in" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state["username"] = ""
 
+# Validation functions
+def validate_username(username):
+    """Ensure username is alphanumeric and 3-15 characters long."""
+    if not re.match(r"^[a-zA-Z0-9_]{3,15}$", username):
+        return False, "Username must be 3-15 characters long and contain only letters, numbers, and underscores."
+    return True, ""
+
+def validate_password(password):
+    """Ensure password has at least 8 characters, one number, one uppercase letter, and one special character."""
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long."
+    if not re.search(r"\d", password):
+        return False, "Password must contain at least one number."
+    if not re.search(r"[A-Z]", password):
+        return False, "Password must contain at least one uppercase letter."
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False, "Password must contain at least one special character."
+    return True, ""
+
+
 # Signup/Login Logic
 if not st.session_state["logged_in"]:
     st.title("Welcome to Pencil Sketch Transformer! 🎨")
-    st.markdown("Please log in or sign up to access the app.")
+    st.markdown("Log in or sign up to access the app.")
 
-    auth_mode = st.sidebar.selectbox("Choose Mode", ["Login", "Signup"])
+    # Create two columns for Login and Signup
+    col1, col2 = st.columns(2)
 
-    if auth_mode == "Signup":
-        st.subheader("Signup")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        if st.button("Signup"):
-            success, message = signup_user(username, password)
-            st.success(message) if success else st.error(message)
-
-    elif auth_mode == "Login":
+    with col1:
         st.subheader("Login")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        username_login = st.text_input("Username (Login)", key="login_username")
+        password_login = st.text_input("Password (Login)", type="password", key="login_password")
         if st.button("Login"):
-            success, message = login_user(username, password)
+            success, message = login_user(username_login, password_login)
             if success:
                 st.session_state["logged_in"] = True
-                st.session_state["username"] = username
+                st.session_state["username"] = username_login
                 st.success("Login successful!")
             else:
                 st.error(message)
+
+    with col2:
+        st.subheader("Signup")
+        username_signup = st.text_input("Username (Signup)", key="signup_username")
+        password_signup = st.text_input("Password (Signup)", type="password", key="signup_password")
+
+        if st.button("Signup"):
+            # Validate username
+            valid_username, username_message = validate_username(username_signup)
+            if not valid_username:
+                st.error(username_message)
+            else:
+                # Validate password
+                valid_password, password_message = validate_password(password_signup)
+                if not valid_password:
+                    st.error(password_message)
+                else:
+                    # Proceed with signup
+                    success, message = signup_user(username_signup, password_signup)
+                    st.success(message) if success else st.error(message)
 else:
     # Main App
     st.title(f"Welcome, {st.session_state['username']}!")
